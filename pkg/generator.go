@@ -18,9 +18,10 @@ import (
 	"unicode"
 
 	"github.com/rs/zerolog"
+	"golang.org/x/tools/imports"
+
 	"github.com/vektra/mockery/v2/pkg/config"
 	"github.com/vektra/mockery/v2/pkg/logging"
-	"golang.org/x/tools/imports"
 )
 
 var invalidIdentifierChar = regexp.MustCompile("[^[:digit:][:alpha:]_]")
@@ -656,7 +657,25 @@ type {{.CallStruct}} struct {
 {{- range .Params.Params}}
 //  - {{.}} 
 {{- end}}
-func (_e *{{.ExpecterName}}) {{.MethodName}}({{range .Params.ParamsIntf}}{{.}},{{end}}) *{{.CallStruct}} {
+func (_e *{{.ExpecterName}}) {{.MethodName}}Any({{range .Params.ParamsIntf}}{{.}},{{end}}) *{{.CallStruct}} {
+	return &{{.CallStruct}}{Call: _e.mock.On("{{.MethodName}}",
+			{{- if not .Params.Variadic }}
+				{{- range .Params.Names}}{{.}},{{end}}
+			{{- else }}
+				append([]interface{}{
+					{{- range $i, $name := .Params.Names }}
+						{{- if (lt $i $.NbNonVariadic)}} {{$name}},
+						{{- else}} }, {{$name}}...
+						{{- end}}
+					{{- end}} )...
+			{{- end }} )}
+}
+
+// {{.MethodName}} is a helper method to define mock.On call
+{{- range .Params.Params}}
+//  - {{.}} 
+{{- end}}
+func (_e *{{.ExpecterName}}) {{.MethodName}}({{range .Params.Params}}{{.}},{{end}}) *{{.CallStruct}} {
 	return &{{.CallStruct}}{Call: _e.mock.On("{{.MethodName}}",
 			{{- if not .Params.Variadic }}
 				{{- range .Params.Names}}{{.}},{{end}}
