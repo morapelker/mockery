@@ -425,12 +425,13 @@ func isNillable(typ types.Type) bool {
 }
 
 type paramList struct {
-	Names      []string
-	Types      []string
-	Params     []string
-	ParamsIntf []string
-	Nilable    []bool
-	Variadic   bool
+	Names           []string
+	Types           []string
+	Params          []string
+	ParamsIntf      []string
+	ParamsWithTypes []string
+	Nilable         []bool
+	Variadic        bool
 }
 
 func (g *Generator) genList(ctx context.Context, list *types.Tuple, variadic bool) *paramList {
@@ -465,13 +466,16 @@ func (g *Generator) genList(ctx context.Context, list *types.Tuple, variadic boo
 		params.Names = append(params.Names, pname)
 		params.Types = append(params.Types, ts)
 
-		params.Params = append(params.Params, fmt.Sprintf("%s %s", pname, ts))
+		paramWithType := fmt.Sprintf("%s %s", pname, ts)
+		params.Params = append(params.Params, paramWithType)
 		params.Nilable = append(params.Nilable, isNillable(v.Type()))
 
 		if strings.Contains(ts, "...") {
 			params.ParamsIntf = append(params.ParamsIntf, fmt.Sprintf("%s ...interface{}", pname))
+			params.ParamsWithTypes = append(params.ParamsWithTypes, fmt.Sprintf("%s ...interface{}", pname))
 		} else {
 			params.ParamsIntf = append(params.ParamsIntf, fmt.Sprintf("%s interface{}", pname))
+			params.ParamsWithTypes = append(params.ParamsWithTypes, paramWithType)
 		}
 	}
 
@@ -675,7 +679,7 @@ func (_e *{{.ExpecterName}}) {{.MethodName}}Any({{range .Params.ParamsIntf}}{{.}
 {{- range .Params.Params}}
 //  - {{.}} 
 {{- end}}
-func (_e *{{.ExpecterName}}) {{.MethodName}}({{range .Params.Params}}{{.}},{{end}}) *{{.CallStruct}} {
+func (_e *{{.ExpecterName}}) {{.MethodName}}({{range .Params.ParamsWithTypes}}{{.}},{{end}}) *{{.CallStruct}} {
 	return &{{.CallStruct}}{Call: _e.mock.On("{{.MethodName}}",
 			{{- if not .Params.Variadic }}
 				{{- range .Params.Names}}{{.}},{{end}}
