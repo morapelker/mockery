@@ -475,7 +475,11 @@ func (g *Generator) genList(ctx context.Context, list *types.Tuple, variadic boo
 			params.ParamsWithTypes = append(params.ParamsWithTypes, fmt.Sprintf("%s ...interface{}", pname))
 		} else {
 			params.ParamsIntf = append(params.ParamsIntf, fmt.Sprintf("%s interface{}", pname))
-			params.ParamsWithTypes = append(params.ParamsWithTypes, paramWithType)
+			if strings.Contains(strings.ToLower(ts), "context") {
+				params.ParamsWithTypes = append(params.ParamsWithTypes, fmt.Sprintf("%s interface{}", pname))
+			} else {
+				params.ParamsWithTypes = append(params.ParamsWithTypes, paramWithType)
+			}
 		}
 	}
 
